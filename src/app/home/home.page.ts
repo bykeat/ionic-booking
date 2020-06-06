@@ -199,6 +199,10 @@ export class HomePage {
     });
   }
 
+  confirmBooking() {
+
+  }
+
   calculateFare() {
     console.log("pickup", this.str_pickup,
       this.ltlg_pickup,
@@ -209,32 +213,19 @@ export class HomePage {
       this.nm_passengers, "book type",
       this.bl_preBook, "pickup date",
       this.dt_pickup, "note", this.str_note);
+
+    // this.http.get("http://localhost:8000/", {responseType:"text"}).toPromise().then(e => {
+    //   console.log(e);
+    // });
+    let httpParams: HttpParams;
+    httpParams.append("origin", `${this.ltlg_pickup.lat},${this.ltlg_pickup.lng}`);
+    httpParams.append("destination", `${this.ltlg_destination.lat},${this.ltlg_destination.lng}`);
+    this.http.get("http://localhost:8000/route_estimation", { responseType: "text", params: httpParams },
+    ).toPromise().then(response => {
+      console.log(response);
+    }).catch(error => {
+      console.log("failed")
+    });
     return;
-    var directionsService = new google.maps.DirectionsService();
-    var directionsRenderer = new google.maps.DirectionsRenderer();
 
-    directionsRenderer.setMap(this.map);
-    directionsService.route({
-      origin: { query: "ang mo kio 1" },
-      destination: { query: "ang mo kio hub" },
-      travelMode: "DRIVING"
-    }, function (response, status) {
-      if (status === 'OK') {
-        directionsRenderer.setDirections(response);
-      } else {
-        window.alert('Directions request failed due to ' + status);
-      }
-    })
-    this.http.get('http://localhost:8000/route_estimation', {}).toPromise()
-      .then(data => {
-        console.log("khk", data);
-      })
-      .catch(error => {
-
-        console.log(error.status);
-        console.log(error.error); // error message as string
-        console.log(error.headers);
-
-      });
   }
-}
