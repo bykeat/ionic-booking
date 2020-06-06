@@ -16,6 +16,10 @@ import {
   MarkerIcon
 } from '@ionic-native/google-maps';
 import { HttpClient, HttpParams } from "@angular/common/http";
+
+
+import { google } from "google-maps";
+declare var google: google;
 @Component({
   selector: 'app-home',
   templateUrl: 'home.page.html',
@@ -28,13 +32,10 @@ export class HomePage {
   bl_preBook: string = "false";
   dt_pickup: number;
   str_note: string = "";
-  timer: Timeout = null;
   ltlg_pickup: LatLng;
   ltlg_destination: LatLng;
-
-  ui_markers: Marker;
-  ui_marker_destination: Marker;
-
+  ui_marker_pickup: google.maps.Marker;
+  ui_marker_destination: google.maps.Marker;
   private map;
 
   constructor(public alertController: AlertController, private http: HttpClient, private geolocation: Geolocation, private platform: Platform) {
@@ -79,7 +80,7 @@ export class HomePage {
       inputs: [
         {
           name: "message",
-          type: "string",
+          type: "text",
         }
       ],
       buttons: [
@@ -132,13 +133,7 @@ export class HomePage {
   }
 
   focusNewLocation() {
-    //future development
-    if (this.timer) {
-      clearTimeout(this.timer);
-      console.log("timeout cleared")
-      this.timer = null
-    }
-    this.timer = setTimeout(this.setDestination.bind(this), 2000);
+    this.setDestination();
   }
 
   setDestination() {
@@ -217,7 +212,8 @@ export class HomePage {
     // this.http.get("http://localhost:8000/", {responseType:"text"}).toPromise().then(e => {
     //   console.log(e);
     // });
-    let httpParams: HttpParams;
+    return;
+    let httpParams: HttpParams = new HttpParams();
     httpParams.append("origin", `${this.ltlg_pickup.lat},${this.ltlg_pickup.lng}`);
     httpParams.append("destination", `${this.ltlg_destination.lat},${this.ltlg_destination.lng}`);
     this.http.get("http://localhost:8000/route_estimation", { responseType: "text", params: httpParams },
@@ -229,3 +225,4 @@ export class HomePage {
     return;
 
   }
+}
