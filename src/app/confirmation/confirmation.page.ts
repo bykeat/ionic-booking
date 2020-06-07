@@ -32,7 +32,8 @@ export class ConfirmationPage implements OnInit {
   async confirmBooking() {
     await this.http.get(`${environment.serverUrl}/confirm_booking`, {
       responseType: "text", params: {
-        booking_id: this.bookingId
+        booking_id: this.bookingId,
+        fcm_token: this.bookingService.getToken()
       }
     },
     ).toPromise().then(this.resetBooking.bind(this)).catch(error => {

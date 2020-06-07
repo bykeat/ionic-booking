@@ -68,28 +68,28 @@ export class HomePage {
     // On success, we should be able to receive notifications
     PushNotifications.addListener('registration',
       (token: PushNotificationToken) => {
-        alert('Push registration success, token: ' + token.value);
+        this.bookingService.setNotification(token.value);
       }
     );
 
     // Some issue with our setup and push will not work
     PushNotifications.addListener('registrationError',
       (error: any) => {
-        alert('Error on registration: ' + JSON.stringify(error));
+        //alert('Error on registration: ' + JSON.stringify(error));
       }
     );
 
     // Show us the notification payload if the app is open on our device
     PushNotifications.addListener('pushNotificationReceived',
       (notification: PushNotification) => {
-        alert('Push received: ' + JSON.stringify(notification));
+        //alert('Push received: ' + JSON.stringify(notification));
       }
     );
 
     // Method called when tapping on a notification
     PushNotifications.addListener('pushNotificationActionPerformed',
       (notification: PushNotificationActionPerformed) => {
-        alert('Push action performed: ' + JSON.stringify(notification));
+        //alert('Push action performed: ' + JSON.stringify(notification));
       }
     );
   }
@@ -228,46 +228,28 @@ export class HomePage {
     });
   }
 
-  async confirmBooking() {
-    const confirmation = await this.alertController.create({
-      header: "Leave note",
-      message: `Booking information here`,
-      buttons: [
-        {
-          text: "Confirm",
-          handler: (e) => {
-            //hk confirm booking in backend
-          },
-
-        }, {
-          text: "Cancel",
-          role: "cancel"
-        }
-      ]
-    });
-    await confirmation.present();
-  }
-
   validateInputs() {
     if (!this.destinationLatLng) {
       console.log("Destination not set.")
+      return false;
     } else if (typeof this.destinationLatLng.lat === "function" || typeof this.destinationLatLng.lng === "function") {
       console.log("Destination unrecognized.")
+      return false;
     }
 
     return true;
   }
 
   calculateFare() {
-    console.log("pickup", this.pickupLocation,
-      this.pickupLatLng,
-      "dest",
-      this.destination,
-      this.destinationLatLng,
-      "passengers",
-      this.passengerCount, "book type",
-      this.bookingType, "pickup date",
-      this.pickupDateTime, "note", this.bookingNote);
+    // console.log("pickup", this.pickupLocation,
+    //   this.pickupLatLng,
+    //   "dest",
+    //   this.destination,
+    //   this.destinationLatLng,
+    //   "passengers",
+    //   this.passengerCount, "book type",
+    //   this.bookingType, "pickup date",
+    //   this.pickupDateTime, "note", this.bookingNote);
 
     if (!this.validateInputs()) {
       return;

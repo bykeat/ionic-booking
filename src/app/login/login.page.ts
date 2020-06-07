@@ -57,8 +57,13 @@ export class LoginPage implements OnInit {
       header: "Register User",
       inputs: [
         {
+          name: "name",
+          placeholder: "Enter name",
+          type: "text",
+        },
+        {
           name: "loginId",
-          placeholder: "Enter login ID",
+          placeholder: "Enter email address",
           type: "text",
         }, {
           name: "password",
@@ -102,6 +107,15 @@ export class LoginPage implements OnInit {
     return "";
   }
 
+  registrationCallback(response) {
+    console.log(response);
+    if (response.status !== 200) {
+      this.popupToast(response.message, "Registration failed");
+    } else {
+      this.popupToast(response.message, "Registration successful");
+    }
+  }
+
   submitRegistration(data) {
     const headers = new HttpHeaders();
     headers.append("Accept", 'application/json');
@@ -110,27 +124,29 @@ export class LoginPage implements OnInit {
     if (data.confirmPassword !== data.password) {
       this.popupToast("Password did not match.", "Error!");
       return false;
-    } else if (data.loginId && data.confirmPassword && data.password) {
-      var regex = new RegExp("^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$");
-      if (regex.test(data.loginId))
-        this.http.get(`${environment.serverUrl}/register`, {
-          params: {
-            id: data.loginId,
-            pwd: data.password
-          }
-        }).toPromise().then((response: any) => {
-          if (response.status !== 200) {
-            this.popupToast(response.message, "Registration failed");
-          } else {
-            this.popupToast(response.message, "Registration successful");
-          }
-        })
-      else
+    } else if (data.loginId && data.confirmPassword && data.password && data.name) {
+      var regex = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+      if (regex.test(data.loginId)) {
+        this.httpRegister(data);
+        return false;
+      } else {
         this.popupToast("Please check your email is correct", "Invalid email")
+        return false;
+      }
     } else {
       this.popupToast("Please check your registration.", "Error!");
       return false;
     }
     return true;
+  }
+
+  async httpRegister(data) {
+    await this.http.get(`${environment.serverUrl}/register`, {
+      params: {
+        id: data.loginId,
+        pwd: data.password,
+        name: data.name
+      }
+    }).toPromise().then(this.registrationCallback.bind(this))
   }
 }
