@@ -18,7 +18,7 @@
       </ion-column>
       <ion-column>
         <ion-item>
-          <ion-input [(ngModel)]="str_pickup" placeholder="Enter pick up location">
+          <ion-input [(ngModel)]="pickupLocation" placeholder="Enter pick up location">
           </ion-input>
         </ion-item>
       </ion-column>
@@ -31,27 +31,27 @@
       </ion-column>
       <ion-column>
         <ion-item>
-          <ion-input [(ngModel)]="str_destination" placeholder="Enter your destination" (focusout)="focusNewLocation()"
-            (keyup.enter)="focusNewLocation()">
+          <ion-input [(ngModel)]="destination" placeholder="Enter your destination" (focusout)="focusNewLocation()"
+            (keyup.enter)="focusNewLocation()" required>
           </ion-input>
         </ion-item>
       </ion-column>
     </ion-row>
     <ion-row>
       <ion-column>
-        <ion-radio-group [(ngModel)]=" bl_preBook" id="book_option">
+        <ion-radio-group [(ngModel)]="bookingType">
           <ion-grid>
             <ion-row>
               <ion-column>
                 <ion-item>
                   <ion-label>Book Now</ion-label>
-                  <ion-radio value="false"></ion-radio>
+                  <ion-radio value="normal"></ion-radio>
                 </ion-item>
               </ion-column>
               <ion-column>
                 <ion-item>
                   <ion-label>Pre-book </ion-label>
-                  <ion-radio value="true"></ion-radio>
+                  <ion-radio value="pre"></ion-radio>
                 </ion-item>
               </ion-column>
             </ion-row>
@@ -65,36 +65,36 @@
     <ion-row>
       <ion-col size="4">
         <ion-item-group>
-          <ion-item class="ion-no-padding" (click)='setPickupTime()' [disabled]="bl_preBook === 'false'">
+          <ion-item class="ion-no-padding" (click)='setPickupTime()' [disabled]="bookingType === 'normal'">
             <ion-icon name="calendar"></ion-icon>
           </ion-item>
-          <ion-item class="ion-no-padding" [disabled]="bl_preBook === 'false'">
-            <ion-datetime class="ion-no-padding" displayFormat="DD MMM YYYY HH:mm" id="datetime" [(ngModel)]="dt_pickup"
-              placeholder="When?" (ionChange)="test()">
+          <ion-item class="ion-no-padding" [disabled]="bookingType === 'normal'">
+            <ion-datetime class="ion-no-padding" displayFormat="DD/MM/YYYY HH:mm" id="datetime" [min]="minSelectionDate"
+              [(ngModel)]=" pickupDateTime" placeholder="When?">
             </ion-datetime>
           </ion-item>
         </ion-item-group>
       </ion-col>
-      <ion-col size="4">
+      <ion-col size=" 4">
         <ion-item class="ion-no-padding" (click)='setPassengers()'>
           <ion-icon name="people"></ion-icon>
         </ion-item>
         <ion-item class="ion-no-padding">
           <ion-button (click)='reducePassenger()'>-</ion-button>
-          <ion-label class="font ion-no-padding">{{nm_passengers}}</ion-label>
+          <ion-label class="font ion-no-padding">{{passengerCount}}</ion-label>
           <ion-button (click)='addPassenger()'>+</ion-button>
         </ion-item>
 
       </ion-col>
       <ion-col size="4">
         <ion-item>
-          <ion-icon name="document-text" (click)="showNote()">
+          <ion-icon name="document-text" (click)="writeNote()">
           </ion-icon>
         </ion-item>
       </ion-col>
     </ion-row>
     <ion-row>
-      <ion-button class="fill-width" (click)="calculateFare()">Calculate Fare</ion-button>
+      <ion-button class="fill-width" type="submit" (click)="calculateFare()">Calculate Fare</ion-button>
     </ion-row>
   </ion-grid>
   <div id="map"></div>

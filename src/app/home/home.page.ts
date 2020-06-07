@@ -1,81 +1,115 @@
 
 import { Component } from '@angular/core';
+import { Router } from '@angular/router';
 import { AlertController, Platform } from '@ionic/angular';
-//import { HTTP } from '@ionic-native/http/ngx'; //android only
-import { Geolocation } from '@ionic-native/geolocation/ngx';
-import {
-  GoogleMaps,
-  GoogleMap,
-  GoogleMapsEvent,
-  GoogleMapOptions,
-  CameraPosition,
-  MarkerOptions,
-  Marker,
-  Environment,
-  LatLng,
-  MarkerIcon
-} from '@ionic-native/google-maps';
 import { HttpClient, HttpParams } from "@angular/common/http";
 
+import {
+  Plugins,
+  PushNotification,
+  PushNotificationToken,
+  PushNotificationActionPerformed
+} from '@capacitor/core';
+const { PushNotifications } = Plugins;
 
+import { Geolocation } from '@ionic-native/geolocation/ngx';
+import {
+  LatLng,
+} from '@ionic-native/google-maps';
 import { google } from "google-maps";
+
+
+import { BookingService } from 'src/service/BookingServiceProvider';
 declare var google: google;
+
 @Component({
   selector: 'app-home',
   templateUrl: 'home.page.html',
   styleUrls: ['home.page.scss'],
 })
 export class HomePage {
-  str_pickup: string = "";
-  str_destination: string = "";
-  nm_passengers: number = 0;
-  bl_preBook: string = "false";
-  dt_pickup: number;
-  str_note: string = "";
-  ltlg_pickup: LatLng;
-  ltlg_destination: LatLng;
-  ui_marker_pickup: google.maps.Marker;
-  ui_marker_destination: google.maps.Marker;
+
+  minSelectionDate: string;
+  pickupLocation: string = "";
+  destination: string = "";
+  passengerCount: number = 1;
+  bookingType: string = "normal";
+  pickupDateTime: number;
+  bookingNote: string = "";
+  pickupLatLng: LatLng;
+  destinationLatLng: LatLng;
+  pickupMarker: google.maps.Marker;
+  destinationMarker: google.maps.Marker;
   private map;
 
-  constructor(public alertController: AlertController, private http: HttpClient, private geolocation: Geolocation, private platform: Platform) {
+
+  constructor(
+    public alertController: AlertController,
+    private http: HttpClient,
+    private geolocation: Geolocation,
+    private platform: Platform,
+    private router: Router,
+    private bookingService: BookingService
+  ) {
 
   }
+
+  async initNotification() {
+    PushNotifications.requestPermission().then(result => {
+      if (result.granted) {
+        // Register with Apple / Google to receive push via APNS/FCM
+        PushNotifications.register();
+      } else {
+        // Show some error
+      }
+    });
+
+    // On success, we should be able to receive notifications
+    PushNotifications.addListener('registration',
+      (token: PushNotificationToken) => {
+        alert('Push registration success, token: ' + token.value);
+      }
+    );
+
+    // Some issue with our setup and push will not work
+    PushNotifications.addListener('registrationError',
+      (error: any) => {
+        alert('Error on registration: ' + JSON.stringify(error));
+      }
+    );
+
+    // Show us the notification payload if the app is open on our device
+    PushNotifications.addListener('pushNotificationReceived',
+      (notification: PushNotification) => {
+        alert('Push received: ' + JSON.stringify(notification));
+      }
+    );
+
+    // Method called when tapping on a notification
+    PushNotifications.addListener('pushNotificationActionPerformed',
+      (notification: PushNotificationActionPerformed) => {
+        alert('Push action performed: ' + JSON.stringify(notification));
+      }
+    );
+  }
+
   async ngOnInit() {
+
+    var tzoffset = (new Date()).getTimezoneOffset() * 60000; //offset in milliseconds
+    var localISOTime = (new Date(Date.now() - tzoffset)).toISOString().slice(0, -1);
+    this.minSelectionDate = localISOTime;
+
+    this.initNotification();
+
     await this.platform.ready();
     await this.getLocation();
 
   }
 
 
-  // async setPassengers() {
-  //   const alert = await this.alertController.create({
-  //     header: "How many going?",
-  //     inputs: [
-  //       {
-  //         name: "passengers",
-  //         type: "number",
-  //       }
-  //     ],
-  //     buttons: [
-  //       {
-  //         text: "Set",
-  //         handler: (e) => {
-  //           nm_passengers = e.passengers;
-  //         },
 
-  //       }, {
-  //         text: "Cancel",
-  //         role: "cancel"
-  //       }
-  //     ]
-  //   });
-  //   await alert.present();
-  // }
-
-
-  async showNote() {
-    const alert = await this.alertController.create({
+  async writeNote() {
+    const leaveNote = await this.alertController.create({
       header: "Leave note",
       inputs: [
         {
@@ -87,7 +121,7 @@ export class HomePage {
         {
           text: "Confirm",
           handler: (e) => {
-            this.str_note = e.message;
+            this.bookingNote = e.message;
           },
 
         }, {
@@ -96,19 +130,17 @@ export class HomePage {
         }
       ]
     });
-    await alert.present();
-  }
-
-  test() {
-    console.log(this.dt_pickup);
+    await leaveNote.present();
   }
 
   addPassenger() {
-    this.nm_passengers++;
+    if (this.passengerCount < 12)
+      this.passengerCount++;
   }
 
   reducePassenger() {
-    this.nm_passengers--;
+    if (this.passengerCount > 1)
+      this.passengerCount--;
   }
 
   setPickupTime() {
@@ -116,20 +148,20 @@ export class HomePage {
   }
 
   loadMap(lat, lng) {
-    this.ltlg_pickup = new LatLng(lat, lng);
+    this.pickupLatLng = new LatLng(lat, lng);
     this.map = new google.maps.Map(
-      document.getElementById('map'), { zoom: 18, center: this.ltlg_pickup, clickableIcons: false });
+      document.getElementById('map'), { zoom: 18, center: this.pickupLatLng, clickableIcons: false });
 
-    if (this.ui_marker_pickup) {
-      this.ui_marker_pickup.setMap(null);
+    if (this.pickupMarker) {
+      this.pickupMarker.setMap(null);
     }
-    this.ui_marker_pickup = new google.maps.Marker({
-      position: this.ltlg_pickup
+    this.pickupMarker = new google.maps.Marker({
+      position: this.pickupLatLng
     });
-    this.ui_marker_pickup.setMap(this.map);
+    this.pickupMarker.setMap(this.map);
 
     var geocoder = new google.maps.Geocoder;
-    this.geocodeLatLng(geocoder, this.ltlg_pickup, this.map, this.updatePickupName.bind(this));
+    this.geocodeLatLng(geocoder, this.pickupLatLng, this.map, this.updatePickupName.bind(this));
   }
 
   focusNewLocation() {
@@ -138,7 +170,7 @@ export class HomePage {
 
   setDestination() {
     var place = new google.maps.places.PlacesService(this.map);
-    var request = { query: this.str_destination, fields: ["geometry"] };
+    var request = { query: this.destination, fields: ["geometry"] };
     place.findPlaceFromQuery(request, this.updateDestinationData.bind(this))
   }
 
@@ -146,32 +178,32 @@ export class HomePage {
 
     if (status === google.maps.places.PlacesServiceStatus.OK) {
       this.map.setCenter(results[0].geometry.location);
-      this.ltlg_destination = results[0].geometry.location;
+      this.destinationLatLng = results[0].geometry.location;
 
-      if (this.ui_marker_destination) {
-        this.ui_marker_destination.setMap(null);
+      if (this.destinationMarker) {
+        this.destinationMarker.setMap(null);
       }
-      this.ui_marker_destination = new google.maps.Marker({
+      this.destinationMarker = new google.maps.Marker({
         position: results[0].geometry.location,
       });
-      this.ui_marker_destination.setMap(this.map);
+      this.destinationMarker.setMap(this.map);
 
       var geocoder = new google.maps.Geocoder;
-      this.geocodeLatLng(geocoder, this.ltlg_destination, this.map, this.updateDestinationName.bind(this));
+      this.geocodeLatLng(geocoder, this.destinationLatLng, this.map, this.updateDestinationName.bind(this));
     }
 
   }
 
   updatePickupName(name) {
-    this.str_pickup = name;
+    this.pickupLocation = name;
   }
   updateDestinationName(name) {
-    this.str_destination = name;
+    this.destination = name;
   }
 
 
-  geocodeLatLng(geocoder, ltlg_location, map, callback) {
-    geocoder.geocode({ 'location': ltlg_location }, function (results, status) {
+  geocodeLatLng(geocoder, locationLatLng, map, callback) {
+    geocoder.geocode({ 'location': locationLatLng }, function (results, status) {
       if (status === 'OK') {
         if (results[0]) {
           map.setZoom(17);
@@ -194,33 +226,67 @@ export class HomePage {
     });
   }
 
-  confirmBooking() {
+  async confirmBooking() {
+    const confirmation = await this.alertController.create({
+      header: "Leave note",
+      message: `Booking information here`,
+      buttons: [
+        {
+          text: "Confirm",
+          handler: (e) => {
+            //hk confirm booking in backend
+          },
 
+        }, {
+          text: "Cancel",
+          role: "cancel"
+        }
+      ]
+    });
+    await confirmation.present();
+  }
+
+  validateInputs() {
+    if (!this.destinationLatLng) {
+      console.log("Destination not set.")
+    } else if (typeof this.destinationLatLng.lat === "function" || typeof this.destinationLatLng.lng === "function") {
+      console.log("Destination unrecognized.")
+      this.destinationLatLng = new LatLng(1.3746711, 103.8591213);
+    }
+
+    return true;
   }
 
   calculateFare() {
-    console.log("pickup", this.str_pickup,
-      this.ltlg_pickup,
+    console.log("pickup", this.pickupLocation,
+      this.pickupLatLng,
       "dest",
-      this.str_destination,
-      this.ltlg_destination,
+      this.destination,
+      this.destinationLatLng,
       "passengers",
-      this.nm_passengers, "book type",
-      this.bl_preBook, "pickup date",
-      this.dt_pickup, "note", this.str_note);
+      this.passengerCount, "book type",
+      this.bookingType, "pickup date",
+      this.pickupDateTime, "note", this.bookingNote);
 
-    // this.http.get("http://localhost:8000/", {responseType:"text"}).toPromise().then(e => {
-    //   console.log(e);
-    // });
-    return;
-    let httpParams: HttpParams = new HttpParams();
-    httpParams.append("origin", `${this.ltlg_pickup.lat},${this.ltlg_pickup.lng}`);
-    httpParams.append("destination", `${this.ltlg_destination.lat},${this.ltlg_destination.lng}`);
-    this.http.get("http://localhost:8000/route_estimation", { responseType: "text", params: httpParams },
+    if (!this.validateInputs()) {
+      return;
+    }
+
+    this.http.get("http://localhost:8000/make_booking", {
+      responseType: "text", params: {
+        booking_type: this.bookingType,
+        origin: `${this.pickupLatLng.lat},${this.pickupLatLng.lng}`,
+        destination: `${this.destinationLatLng.lat},${this.destinationLatLng.lng}`,
+        passengers: this.passengerCount.toString(),
+        notes: this.bookingNote,
+        pickup_time: this.pickupDateTime ? new Date(this.pickupDateTime).toISOString() : new Date().toISOString()
+      }
+    },
     ).toPromise().then(response => {
-      console.log(response);
+      this.bookingService.setBookingDetails(response);
+      this.router.navigateByUrl("/home/confirmation");
     }).catch(error => {
-      console.log("failed")
+      console.log("failed", error)
     });
     return;
 

@@ -1,0 +1,25 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Booking Confirmation</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-item>
+    <ion-label>Booking ID: {{bookingId}}</ion-label>
+  </ion-item>
+  <ion-item>
+    <ion-label>Pick Up Time: {{pickupDateTime}}</ion-label>
+  </ion-item>
+  <ion-item>
+    <ion-label>Fare: {{fare}}</ion-label>
+  </ion-item>
+  <ion-item>
+    <ion-label>Distance: {{distance}}</ion-label>
+  </ion-item>
+  <ion-item>
+    <ion-label>Travel Time: {{timeTaken}}</ion-label>
+  </ion-item>
+  <ion-button (click)="confirmBooking()">Confirm</ion-button>
+  <ion-button (click)="resetBooking()">Cancel</ion-button>
+</ion-content>
