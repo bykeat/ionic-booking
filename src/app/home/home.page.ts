@@ -3,7 +3,7 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { AlertController, Platform } from '@ionic/angular';
 import { HttpClient, HttpParams } from "@angular/common/http";
-
+import { environment } from "./../../environments/environment";
 import {
   Plugins,
   PushNotification,
@@ -20,6 +20,7 @@ import { google } from "google-maps";
 
 
 import { BookingService } from 'src/service/BookingServiceProvider';
+import { from } from 'rxjs';
 declare var google: google;
 
 @Component({
@@ -171,14 +172,15 @@ export class HomePage {
   setDestination() {
     var place = new google.maps.places.PlacesService(this.map);
     var request = { query: this.destination, fields: ["geometry"] };
-    place.findPlaceFromQuery(request, this.updateDestinationData.bind(this))
+    place.findPlaceFromQuery(request, this.updateDestinationData.bind(this));
   }
 
   updateDestinationData(results, status) {
 
     if (status === google.maps.places.PlacesServiceStatus.OK) {
       this.map.setCenter(results[0].geometry.location);
-      this.destinationLatLng = results[0].geometry.location;
+
+      this.destinationLatLng = new LatLng(results[0].geometry.location.lat(), results[0].geometry.location.lng());
 
       if (this.destinationMarker) {
         this.destinationMarker.setMap(null);
@@ -251,7 +253,6 @@ export class HomePage {
       console.log("Destination not set.")
     } else if (typeof this.destinationLatLng.lat === "function" || typeof this.destinationLatLng.lng === "function") {
       console.log("Destination unrecognized.")
-      this.destinationLatLng = new LatLng(1.3746711, 103.8591213);
     }
 
     return true;
@@ -272,7 +273,7 @@ export class HomePage {
       return;
     }
 
-    this.http.get("http://localhost:8000/make_booking", {
+    this.http.get(`${environment.serverUrl}/make_booking`, {
       responseType: "text", params: {
         booking_type: this.bookingType,
         origin: `${this.pickupLatLng.lat},${this.pickupLatLng.lng}`,

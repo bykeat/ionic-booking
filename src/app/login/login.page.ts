@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from './../../environments/environment';
-import { AlertController } from '@ionic/angular';
+import { ToastController, AlertController } from '@ionic/angular';
 import { Router } from '@angular/router';
 @Component({
   selector: 'app-login',
@@ -9,10 +9,11 @@ import { Router } from '@angular/router';
   styleUrls: ['./login.page.scss'],
 })
 export class LoginPage implements OnInit {
+  showSpinner: boolean = false;
   loginId: string;
   loginPwd: string;
   csrfToken: string = this.getCookie("XSRF-TOKEN");
-  constructor(private http: HttpClient, private alertController: AlertController, private router: Router) { }
+  constructor(private http: HttpClient, private alertController: AlertController, private toastController: ToastController, private router: Router) { }
 
   ngOnInit() {
     this.http.get(`${environment.serverUrl}/`).toPromise().then((response: Response) => {
@@ -20,19 +21,35 @@ export class LoginPage implements OnInit {
   }
 
   loginUser() {
+
     const headers = new HttpHeaders();
     headers.append("Accept", 'application/json');
     headers.append('Content-Type', 'application/json');
-    this.http.post(`${environment.serverUrl}/login`, { headers: headers }).toPromise().then(response => {
-      const data = JSON.parse(response.toString());
-      console.log(data);
-      if (data.status !== 200) {
-        alert("login failed");
+
+    this.showSpinner = true;
+    this.http.get(`${environment.serverUrl}/login`, {
+      headers: headers, params: {
+        id: this.loginId,
+        pwd: this.loginPwd
+      }
+    }).toPromise().then((response: any) => {
+      this.showSpinner = false;
+      if (response.status !== 200) {
+        this.popupToast(response.message, "Login");
       } else {
-        alert("login success");
+        this.popupToast(response.message, "Login");
         this.router.navigateByUrl("home");
       }
     });
+  }
+
+  async popupToast(message, title) {
+    const toast = await this.toastController.create({
+      header: title,
+      message: message,
+      duration: 2000
+    });
+    toast.present();
   }
 
   async registerUser() {
@@ -89,21 +106,29 @@ export class LoginPage implements OnInit {
     const headers = new HttpHeaders();
     headers.append("Accept", 'application/json');
     headers.append('Content-Type', 'application/json');
+
     if (data.confirmPassword !== data.password) {
-      alert("Password did not match.");
+      this.popupToast("Password did not match.", "Error!");
       return false;
     } else if (data.loginId && data.confirmPassword && data.password) {
-      this.http.post(`${environment.serverUrl}/register`, {
-        id: data.loginId,
-        pwd: data.password
-      }, {
-        headers: headers
-      }).toPromise().then(response => {
-        const jsonObj = JSON.parse(response.toString());
-        console.log("response", jsonObj);
-      })
+      var regex = new RegExp("^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$");
+      if (regex.test(data.loginId))
+        this.http.get(`${environment.serverUrl}/register`, {
+          params: {
+            id: data.loginId,
+            pwd: data.password
+          }
+        }).toPromise().then((response: any) => {
+          if (response.status !== 200) {
+            this.popupToast(response.message, "Registration failed");
+          } else {
+            this.popupToast(response.message, "Registration successful");
+          }
+        })
+      else
+        this.popupToast("Please check your email is correct", "Invalid email")
     } else {
-      alert("Please check your registration.");
+      this.popupToast("Please check your registration.", "Error!");
       return false;
     }
     return true;

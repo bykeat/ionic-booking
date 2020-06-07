@@ -1,6 +1,6 @@
 <ion-header>
   <ion-toolbar>
-    <ion-title>login</ion-title>
+    <ion-title>Login</ion-title>
   </ion-toolbar>
   <meta name="csrf-token" content="{{ csrfToken }}" />
 </ion-header>
@@ -13,6 +13,9 @@
     <ion-input placeholder="Password" type="password" [(ngModel)]="loginPwd"></ion-input>
   </ion-item>
   <ion-item>
+    <ion-item>
+      <ion-spinner [hidden]="!showSpinner"></ion-spinner>
+    </ion-item>
     <ion-button (click)="loginUser()">Login</ion-button>
     <ion-button (click)="registerUser()">Register</ion-button>
   </ion-item>

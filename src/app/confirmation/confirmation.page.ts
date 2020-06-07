@@ -3,6 +3,7 @@ import { BookingService } from 'src/service/BookingServiceProvider';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Location } from '@angular/common';
+import { environment } from './../../environments/environment';
 
 @Component({
   selector: 'app-confirmation',
@@ -28,21 +29,30 @@ export class ConfirmationPage implements OnInit {
     this.pickupDateTime = bookingDetails.pickup_datetime;
   }
 
-  confirmBooking() {
-    this.http.get("http://localhost:8000/make_booking", {
+  async confirmBooking() {
+    await this.http.get(`${environment.serverUrl}/confirm_booking`, {
       responseType: "text", params: {
         booking_id: this.bookingId
       }
     },
-    ).toPromise().then(response => {
-      this.resetBooking();
-    }).catch(error => {
+    ).toPromise().then(this.resetBooking.bind(this)).catch(error => {
+      console.log("failed", error)
+    });
+  }
+
+  async cancelBooking() {
+    await this.http.get(`${environment.serverUrl}/cancel_booking`, {
+      responseType: "text", params: {
+        booking_id: this.bookingId
+      }
+    },
+    ).toPromise().then(this.resetBooking.bind(this)).catch(error => {
       console.log("failed", error)
     });
   }
 
   resetBooking() {
     this.bookingService.resetBookingDetails();
-    this._location.back()
+    this._location.back();
   }
 }
