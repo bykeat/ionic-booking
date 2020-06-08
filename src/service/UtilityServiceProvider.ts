@@ -8,7 +8,8 @@ export class UtilityService {
     async showToast(title, message) {
         const toast = await new ToastController().create({
             header: title,
-            message: message
+            message: message,
+            duration: 2000
         });
         toast.present();
     }

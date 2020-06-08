@@ -167,7 +167,11 @@ export class HomePage {
   loadMap(lat, lng) {
     this.pickupLatLng = new LatLng(lat, lng);
     this.map = new google.maps.Map(
-      document.getElementById('map'), { zoom: 18, center: this.pickupLatLng, clickableIcons: false });
+      document.getElementById('map'), {
+      zoom: 18, center: this.pickupLatLng,
+      clickableIcons: false,
+      disableDefaultUI: true
+    });
 
     if (this.pickupMarker) {
       this.pickupMarker.setMap(null);
