@@ -5,12 +5,12 @@ import { Injectable } from "@angular/core"
 })
 export class BookingService {
     private bookingDetails: any; // of course replace any with a nice interface of your own
-    private token: string;
+    private token: string = "";
     public setBookingDetails(param) {
         this.bookingDetails = param;
     }
 
-    public setNotification(token) {
+    public setToken(token) {
         this.token = token;
     }
 

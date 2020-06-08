@@ -1,22 +1,25 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { environment } from './../../environments/environment';
+import { environment } from '../../environments/environment';
 import { ToastController, AlertController } from '@ionic/angular';
 import { Router } from '@angular/router';
+import { UtilityService } from 'src/service/UtilityServiceProvider';
 @Component({
   selector: 'app-login',
   templateUrl: './login.page.html',
   styleUrls: ['./login.page.scss'],
 })
 export class LoginPage implements OnInit {
+  constructor(private http: HttpClient, private alertController: AlertController, private utilityService: UtilityService, private toastController: ToastController, private router: Router) { }
+
   showSpinner: boolean = false;
   loginId: string;
   loginPwd: string;
-  csrfToken: string = this.getCookie("XSRF-TOKEN");
-  constructor(private http: HttpClient, private alertController: AlertController, private toastController: ToastController, private router: Router) { }
+  csrfToken: string = this.utilityService.getCookie("XSRF-TOKEN");
 
   ngOnInit() {
     this.http.get(`${environment.serverUrl}/`).toPromise().then((response: Response) => {
+      //Get CSRF Token from Laravel
     })
   }
 
@@ -35,21 +38,12 @@ export class LoginPage implements OnInit {
     }).toPromise().then((response: any) => {
       this.showSpinner = false;
       if (response.status !== 200) {
-        this.popupToast(response.message, "Login");
+        this.utilityService.showToast("Login", response.message);
       } else {
-        this.popupToast(response.message, "Login");
+        this.utilityService.showToast("Login", response.message);
         this.router.navigateByUrl("home");
       }
     });
-  }
-
-  async popupToast(message, title) {
-    const toast = await this.toastController.create({
-      header: title,
-      message: message,
-      duration: 2000
-    });
-    toast.present();
   }
 
   async registerUser() {
@@ -81,7 +75,6 @@ export class LoginPage implements OnInit {
           handler: (e) => {
             return this.submitRegistration(e);
           },
-
         }, {
           text: "Cancel",
           role: "cancel"
@@ -91,28 +84,14 @@ export class LoginPage implements OnInit {
     await register.present();
   }
 
-  getCookie(cname) {
-    var name = cname + "=";
-    var decodedCookie = decodeURIComponent(document.cookie);
-    var ca = decodedCookie.split(';');
-    for (var i = 0; i < ca.length; i++) {
-      var c = ca[i];
-      while (c.charAt(0) == ' ') {
-        c = c.substring(1);
-      }
-      if (c.indexOf(name) == 0) {
-        return c.substring(name.length, c.length);
-      }
-    }
-    return "";
-  }
+
 
   registrationCallback(response) {
     console.log(response);
     if (response.status !== 200) {
-      this.popupToast(response.message, "Registration failed");
+      this.utilityService.showToast("Registration failed.", response.message);
     } else {
-      this.popupToast(response.message, "Registration successful");
+      this.utilityService.showToast("Registration successful.", response.message);
     }
   }
 
@@ -122,22 +101,21 @@ export class LoginPage implements OnInit {
     headers.append('Content-Type', 'application/json');
 
     if (data.confirmPassword !== data.password) {
-      this.popupToast("Password did not match.", "Error!");
+      this.utilityService.showToast("Error!", "Password did not match.");
       return false;
     } else if (data.loginId && data.confirmPassword && data.password && data.name) {
       var regex = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
       if (regex.test(data.loginId)) {
         this.httpRegister(data);
-        return false;
+        return true;
       } else {
-        this.popupToast("Please check your email is correct", "Invalid email")
+        this.utilityService.showToast("Invalid email format!", "Please check your email.");
         return false;
       }
     } else {
-      this.popupToast("Please check your registration.", "Error!");
+      this.utilityService.showToast("Invalid registration!", "Ensure your registration is complete.");
       return false;
     }
-    return true;
   }
 
   async httpRegister(data) {

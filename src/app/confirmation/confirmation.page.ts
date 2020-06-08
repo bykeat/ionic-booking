@@ -3,7 +3,7 @@ import { BookingService } from 'src/service/BookingServiceProvider';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Location } from '@angular/common';
-import { environment } from './../../environments/environment';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-confirmation',

@@ -1,9 +1,9 @@
 
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { AlertController, Platform } from '@ionic/angular';
+import { AlertController, Platform, ToastController } from '@ionic/angular';
 import { HttpClient, HttpParams } from "@angular/common/http";
-import { environment } from "./../../environments/environment";
+import { environment } from "../../environments/environment";
 import {
   Plugins,
   PushNotification,
@@ -20,7 +20,7 @@ import { google } from "google-maps";
 
 
 import { BookingService } from 'src/service/BookingServiceProvider';
-import { from } from 'rxjs';
+import { UtilityService } from 'src/service/UtilityServiceProvider';
 declare var google: google;
 
 @Component({
@@ -50,9 +50,15 @@ export class HomePage {
     private geolocation: Geolocation,
     private platform: Platform,
     private router: Router,
-    private bookingService: BookingService
+    private bookingService: BookingService,
+    public toastController: ToastController,
+    private utilityService: UtilityService
   ) {
 
+  }
+
+  test() {
+    this.utilityService.showToast("test", "test");
   }
 
   async initNotification() {
@@ -68,30 +74,40 @@ export class HomePage {
     // On success, we should be able to receive notifications
     PushNotifications.addListener('registration',
       (token: PushNotificationToken) => {
-        this.bookingService.setNotification(token.value);
+        this.bookingService.setToken(token.value);
       }
     );
 
     // Some issue with our setup and push will not work
     PushNotifications.addListener('registrationError',
       (error: any) => {
-        //alert('Error on registration: ' + JSON.stringify(error));
+        alert('Error on registration: ' + JSON.stringify(error));
       }
     );
 
     // Show us the notification payload if the app is open on our device
     PushNotifications.addListener('pushNotificationReceived',
       (notification: PushNotification) => {
-        //alert('Push received: ' + JSON.stringify(notification));
+        //this.popupToast(notification.body, notification.title);
+        this.utilityService.showToast(notification.title, notification.body);
       }
     );
 
     // Method called when tapping on a notification
     PushNotifications.addListener('pushNotificationActionPerformed',
       (notification: PushNotificationActionPerformed) => {
-        //alert('Push action performed: ' + JSON.stringify(notification));
+        alert('Push action performed: ' + JSON.stringify(notification));
       }
     );
+  }
+
+  async popupToast(message, title) {
+    const toast = await this.toastController.create({
+      header: title,
+      message: message,
+      duration: 2000
+    });
+    toast.present();
   }
 
   async ngOnInit() {
@@ -257,6 +273,7 @@ export class HomePage {
 
     this.http.get(`${environment.serverUrl}/make_booking`, {
       responseType: "text", params: {
+        fcm_token: this.bookingService.getToken(),
         booking_type: this.bookingType,
         origin: `${this.pickupLatLng.lat},${this.pickupLatLng.lng}`,
         destination: `${this.destinationLatLng.lat},${this.destinationLatLng.lng}`,
