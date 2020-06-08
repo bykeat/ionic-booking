@@ -43,7 +43,7 @@
         </ion-item>
       </ion-column>
       <ion-column>
-        <ion-radio-group [(ngModel)]="bookingType">
+        <ion-radio-group [(ngModel)]="bookingType" class="ion-no-margin ion-no-padding">
           <ion-grid>
             <ion-row>
               <ion-column>
@@ -72,7 +72,7 @@
           <ion-item class="ion-no-padding" (click)='setPickupTime()' [disabled]="bookingType === 'normal'">
             <ion-icon name="calendar"></ion-icon>
           </ion-item>
-          <ion-item class="ion-no-padding" [disabled]="bookingType === 'normal'">
+          <ion-item class="ion-no-margin ion-no-padding" [disabled]="bookingType === 'normal'">
             <ion-datetime class="ion-no-padding" displayFormat="DD/MM/YYYY HH:mm" id="datetime" [min]="minSelectionDate"
               [(ngModel)]=" pickupDateTime" placeholder="When?">
             </ion-datetime>
@@ -80,17 +80,17 @@
         </ion-item-group>
       </ion-col>
       <ion-col size=" 4">
-        <ion-item class="ion-no-padding" (click)='setPassengers()'>
+        <ion-item class="ion-no-padding ion-no-margin" (click)='setPassengers()'>
           <ion-icon name="people"></ion-icon>
         </ion-item>
-        <ion-item class="ion-no-padding">
+        <ion-item class="ion-no-padding ion-no-margin">
           <ion-button (click)='reducePassenger()'>-</ion-button>
           <ion-label class="font ion-no-padding">{{passengerCount}}</ion-label>
           <ion-button (click)='addPassenger()'>+</ion-button>
         </ion-item>
       </ion-col>
       <ion-col size="4">
-        <ion-item>
+        <ion-item class="ion-no-margin">
           <ion-icon name="ellipsis-horizontal-outline" (click)="test()">
           </ion-icon>
         </ion-item>

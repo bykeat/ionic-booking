@@ -283,7 +283,7 @@ export class HomePage {
         destination: `${this.destinationLatLng.lat},${this.destinationLatLng.lng}`,
         passengers: this.passengerCount.toString(),
         notes: this.bookingNote,
-        pickup_time: this.pickupDateTime ? new Date(this.pickupDateTime).toISOString() : new Date().toISOString()
+        pickup_time: this.pickupDateTime && this.bookingType === "pre" ? new Date(this.pickupDateTime).toISOString() : new Date().toISOString()
       }
     },
     ).toPromise().then(response => {
